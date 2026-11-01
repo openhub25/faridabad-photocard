@@ -74,10 +74,13 @@ photoInput.addEventListener("change", () => {
     ctx.drawImage(template, 0, 0);
 
     // ছবির জায়গা: প্রয়োজনে প্রিভিউ দেখে এই মাপ ঠিক করা হবে
-    const x = Math.round(canvas.width * 0.193);
-    const y = Math.round(canvas.height * 0.174);
-    const w = Math.round(canvas.width * 0.614);
-    const h = Math.round(canvas.height * 0.582);
+const ARTBOARD_W = 1120;
+const ARTBOARD_H = 1428;
+
+const x = 403.3333;
+const y = 747.7778;
+const w = 310.6667;
+const h = 310.6667;
 
     const scale = Math.max(w / photo.width, h / photo.height);
     const sw = w / scale;
