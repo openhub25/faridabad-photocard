@@ -84,7 +84,7 @@ document.getElementById("photo").addEventListener("change", async function(e) {
   const { data: urlData } = supabaseClient.storage
     .from("photocard_uploads")
     const { error: dbError } = await supabaseClient
-  .from("photo_uploads")
+  .from("photocard-uploads")
   .insert([{ image_url: data.path }]);
 
   if (dbError) {
