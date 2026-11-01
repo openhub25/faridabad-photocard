@@ -1,0 +1,206 @@
+
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>অ্যাডমিন প্যানেল | ফরিদাবাদ ৭০ সালা ফটোকার্ড</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#f5f1ed;color:#29201f;font-family:'Hind Siliguri',sans-serif}
+header{background:#702d38;color:white;text-align:center;padding:22px 14px}
+header h1{font-size:23px;margin:0}
+main{max-width:900px;margin:24px auto;padding:16px}
+.panel{background:white;border-radius:14px;padding:20px;margin-bottom:18px;box-shadow:0 4px 18px #00000010}
+h2{color:#702d38;margin-top:0;font-size:21px}
+input{width:100%;padding:12px;border:1px solid #d7c5c7;border-radius:8px;font:inherit;margin:6px 0 12px}
+button{border:0;border-radius:8px;padding:10px 16px;background:#702d38;color:white;font:inherit;cursor:pointer}
+button:disabled{opacity:.55;cursor:not-allowed}
+.secondary{background:#66585a}
+.danger{background:#a32626}
+#status{margin-top:12px;overflow-wrap:anywhere}
+.hidden{display:none}
+.topline{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+#photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:15px}
+.photo{border:1px solid #eee;border-radius:10px;padding:10px}
+.photo img{width:100%;height:210px;object-fit:contain;background:#f7f7f7;border-radius:7px}
+.meta{font-size:13px;color:#777;margin:8px 0;overflow-wrap:anywhere}
+.photo button{width:100%;margin-top:5px}
+</style>
+</head>
+<body>
+<header><h1>ফরিদাবাদ ৭০ সালা ফটোকার্ড — অ্যাডমিন প্যানেল</h1></header>
+<main>
+<section class="panel" id="loginPanel">
+<h2>অ্যাডমিন লগইন</h2>
+<form id="loginForm">
+<label>ইমেইল</label>
+<input id="email" type="email" autocomplete="username" required>
+<label>পাসওয়ার্ড</label>
+<input id="password" type="password" autocomplete="current-password" required>
+<button id="loginBtn" type="submit">লগইন করুন</button>
+</form>
+<p id="loginStatus" role="status"></p>
+</section>
+
+<section class="panel hidden" id="dashboard">
+<div class="topline">
+<h2>আপলোড করা ছবি</h2>
+<div>
+<button class="secondary" id="refreshBtn">রিফ্রেশ</button>
+<button class="secondary" id="logoutBtn">লগআউট</button>
+</div>
+</div>
+<p id="listStatus" role="status">ছবি লোড হচ্ছে...</p>
+<div id="photos"></div>
+</section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL="https://uzwrtvzeeapkeqfabcbv.supabase.co";
+const SUPABASE_KEY="sb_publishable_3UdMAkA88HTIfU7qv0p82Q_GTfL0lK2";
+
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const loginPanel=document.getElementById("loginPanel");
+const dashboard=document.getElementById("dashboard");
+const loginStatus=document.getElementById("loginStatus");
+const listStatus=document.getElementById("listStatus");
+const photos=document.getElementById("photos");
+
+async function checkAdmin(){
+ const {data:{user}}=await db.auth.getUser();
+ if(!user){showLogin();return}
+
+ const {data,error}=await db.from("admin_users")
+ .select("user_id").eq("user_id",user.id).maybeSingle();
+
+ if(error||!data){
+  await db.auth.signOut();
+  showLogin();
+  loginStatus.textContent="এই অ্যাকাউন্টের অ্যাডমিন অনুমতি নেই।";
+  return;
+ }
+ loginPanel.classList.add("hidden");
+ dashboard.classList.remove("hidden");
+ await loadPhotos();
+}
+
+function showLogin(){
+ dashboard.classList.add("hidden");
+ loginPanel.classList.remove("hidden");
+}
+
+async function loadPhotos(){
+ photos.innerHTML="";
+ listStatus.textContent="ছবি লোড হচ্ছে...";
+
+ const {data,error}=await db.from("photo_uploads")
+ .select("id,image_url,created_at")
+ .order("created_at",{ascending:false});
+
+ if(error){
+  listStatus.textContent="ছবি আনা যায়নি: "+error.message;
+  return;
+ }
+ if(!data||data.length===0){
+  listStatus.textContent="এখনো কোনো ছবি আপলোড হয়নি।";
+  return;
+ }
+
+ listStatus.textContent="মোট ছবি: "+data.length;
+
+ for(const item of data){
+  const {data:signed,error:signedError}=await db.storage
+  .from("photocard-uploads")
+  .createSignedUrl(item.image_url,3600);
+
+  const card=document.createElement("article");
+  card.className="photo";
+
+  if(!signedError&&signed?.signedUrl){
+   const img=document.createElement("img");
+   img.src=signed.signedUrl;
+   img.alt="আপলোড করা ছবি";
+   card.appendChild(img);
+  }else{
+   const msg=document.createElement("p");
+   msg.textContent="ছবিটি দেখা যাচ্ছে না: "+(signedError?.message||"");
+   card.appendChild(msg);
+  }
+
+  const meta=document.createElement("div");
+  meta.className="meta";
+  meta.textContent="আপলোড: "+new Date(item.created_at).toLocaleString("bn-BD");
+  card.appendChild(meta);
+
+  const del=document.createElement("button");
+  del.className="danger";
+  del.textContent="ছবি মুছে ফেলুন";
+  del.addEventListener("click",()=>deletePhoto(item,del));
+  card.appendChild(del);
+  photos.appendChild(card);
+ }
+}
+
+async function deletePhoto(item,button){
+ if(!confirm("এই ছবিটি স্থায়ীভাবে মুছে ফেলতে চান?"))return;
+
+ button.disabled=true;
+ button.textContent="মুছছে...";
+
+ const {error:storageError}=await db.storage
+ .from("photocard-uploads").remove([item.image_url]);
+
+ if(storageError){
+  alert("ছবি মুছতে সমস্যা: "+storageError.message);
+  button.disabled=false;
+  button.textContent="ছবি মুছে ফেলুন";
+  return;
+ }
+
+ const {error:rowError}=await db.from("photo_uploads")
+ .delete().eq("id",item.id);
+
+ if(rowError){
+  alert("ছবির ফাইল মুছেছে, কিন্তু তালিকার তথ্য মুছতে সমস্যা: "+rowError.message);
+  await loadPhotos();
+  return;
+ }
+ await loadPhotos();
+}
+
+document.getElementById("loginForm").addEventListener("submit",async e=>{
+ e.preventDefault();
+ const btn=document.getElementById("loginBtn");
+ btn.disabled=true;
+ loginStatus.textContent="লগইন হচ্ছে...";
+
+ const {error}=await db.auth.signInWithPassword({
+  email:document.getElementById("email").value.trim(),
+  password:document.getElementById("password").value
+ });
+
+ btn.disabled=false;
+
+ if(error){
+  loginStatus.textContent="লগইন হয়নি: "+error.message;
+  return;
+ }
+ loginStatus.textContent="";
+ await checkAdmin();
+});
+
+document.getElementById("refreshBtn").addEventListener("click",loadPhotos);
+
+document.getElementById("logoutBtn").addEventListener("click",async()=>{
+ await db.auth.signOut();
+ showLogin();
+ loginStatus.textContent="লগআউট হয়েছে।";
+});
+
+checkAdmin();
+</script>
+</body>
+</html>
