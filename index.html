@@ -1,116 +1,138 @@
+
 <!DOCTYPE html>
 <html lang="bn">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ফরিদাবাদ ৭০ সালা ফটোকার্ড</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap');
-*{box-sizing:border-box}
-body{margin:0;background:#f5f1ed;font-family:'Hind Siliguri',sans-serif;color:#29201f}
-header{background:#702d38;color:white;text-align:center;padding:30px 15px}
-header h1{font-size:25px;margin:0}
-header p{margin:8px 0 0}
-main{max-width:500px;margin:25px auto;padding:20px}
-.panel{background:white;border-radius:16px;padding:22px;box-shadow:0 4px 18px #00000012}
-h2{text-align:center;color:#702d38;margin-top:0}
-.upload{display:block;border:2px dashed #b88b90;border-radius:12px;padding:30px 15px;text-align:center;background:#fffafa;cursor:pointer}
-.upload input{display:none}
-#preview{display:none;width:180px;height:180px;object-fit:contain;border-radius:12px;margin:18px auto}
-button{width:100%;border:0;border-radius:10px;padding:13px;background:#702d38;color:white;font-size:17px;font-family:inherit;margin-top:15px;cursor:pointer}
-button:disabled{opacity:.6;cursor:not-allowed}
-.note{text-align:center;color:#777;font-size:13px;margin-top:18px}
-#status{text-align:center;margin-top:14px;font-size:14px;overflow-wrap:anywhere}
-footer{text-align:center;padding:20px;color:#777;font-size:13px}
+body{font-family:Arial,sans-serif;background:#f4f4f4;text-align:center;padding:20px}
+.container{max-width:600px;margin:auto;background:white;padding:20px;border-radius:12px}
+h2{color:#333}
+input,button{margin:12px;padding:12px;font-size:16px}
+button{background:#167b50;color:white;border:0;border-radius:6px;cursor:pointer}
+button:disabled{opacity:.5}
+canvas{width:100%;height:auto;margin-top:15px;border:1px solid #ddd}
+#status{margin:12px;color:#167b50}
 </style>
 </head>
 <body>
-<header>
-<h1>ফরিদাবাদ ৭০ সালা ফটোকার্ড</h1>
-<p>আপনার ছবি দিয়ে তৈরি করুন স্মরণীয় ফটোকার্ড</p>
-</header>
-<main>
-<div class="panel">
-<h2>আপনার ছবি আপলোড করুন</h2>
-<label class="upload">
-<input type="file" id="photo" accept="image/*">
-<span>📷</span><br>
-<strong>ছবি নির্বাচন করুন</strong>
-<br>এখানে চাপ দিয়ে মোবাইল থেকে ছবি দিন
-</label>
-<img id="preview" alt="আপনার ছবির প্রিভিউ">
-<button type="button" id="uploadBtn" disabled>ছবি আপলোড করুন</button>
-<p id="status" role="status" aria-live="polite"></p>
-<p class="note">শুধুমাত্র নিজের ছবি আপলোড করুন।</p>
+<div class="container">
+<h2>ফরিদাবাদ ৭০ সালা ফটোকার্ড</h2>
+<p>নিজের ছবি নির্বাচন করুন</p>
+<input type="file" id="photoInput" accept="image/*">
+<canvas id="canvas"></canvas>
+<br>
+<button id="downloadBtn" disabled>ফটোকার্ড ডাউনলোড করুন</button>
+<button id="uploadBtn" disabled>ছবি জমা দিন</button>
+<p id="status"></p>
 </div>
-</main>
-<footer>ফরিদাবাদ ৭০ সালা ফটোকার্ড</footer>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script>
 const SUPABASE_URL = "https://uzwrtvzeeapkeqfabcbv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_3UdMAkA88HTIfU7qv0p82Q_GTfL0lK2";
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-const photoInput = document.getElementById("photo");
-const preview = document.getElementById("preview");
-const uploadBtn = document.getElementById("uploadBtn");
-const statusBox = document.getElementById("status");
-let selectedFile = null;
 
-photoInput.addEventListener("change", function () {
-  selectedFile = photoInput.files && photoInput.files[0] ? photoInput.files[0] : null;
-  if (!selectedFile) {
-    preview.style.display = "none";
-    uploadBtn.disabled = true;
-    statusBox.textContent = "";
-    return;
-  }
-  if (!selectedFile.type.startsWith("image/")) {
-    selectedFile = null;
-    photoInput.value = "";
-    uploadBtn.disabled = true;
-    statusBox.textContent = "দয়া করে একটি ছবির ফাইল নির্বাচন করুন।";
-    return;
-  }
-  preview.src = URL.createObjectURL(selectedFile);
-  preview.style.display = "block";
-  uploadBtn.disabled = false;
-  statusBox.textContent = "ছবি নির্বাচন হয়েছে। এবার আপলোড করুন।";
+const TEMPLATE_URL = "https://uzwrtvzeeapkeqfabcbv.supabase.co/storage/v1/object/public/photocard-templates/WhatsApp%20Image%202026-11-01%20at%204.58.11%20AM.jpeg";
+
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+const photoInput = document.getElementById("photoInput");
+const downloadBtn = document.getElementById("downloadBtn");
+const uploadBtn = document.getElementById("uploadBtn");
+const statusText = document.getElementById("status");
+
+const template = new Image();
+template.crossOrigin = "anonymous";
+let selectedPhoto = null;
+let ready = false;
+
+template.onload = () => {
+  canvas.width = template.naturalWidth;
+  canvas.height = template.naturalHeight;
+  ctx.drawImage(template, 0, 0);
+  ready = true;
+};
+template.onerror = () => {
+  statusText.textContent = "ফটোকার্ডের ডিজাইন লোড হয়নি।";
+};
+template.src = TEMPLATE_URL;
+
+photoInput.addEventListener("change", () => {
+  const file = photoInput.files[0];
+  if (!file) return;
+
+  selectedPhoto = file;
+  const photo = new Image();
+  photo.onload = () => {
+    if (!ready) {
+      statusText.textContent = "ডিজাইন লোড হচ্ছে, একটু অপেক্ষা করুন।";
+      return;
+    }
+
+    ctx.drawImage(template, 0, 0);
+
+    // ছবির জায়গা: প্রয়োজনে প্রিভিউ দেখে এই মাপ ঠিক করা হবে
+    const x = Math.round(canvas.width * 0.193);
+    const y = Math.round(canvas.height * 0.174);
+    const w = Math.round(canvas.width * 0.614);
+    const h = Math.round(canvas.height * 0.582);
+
+    const scale = Math.max(w / photo.width, h / photo.height);
+    const sw = w / scale;
+    const sh = h / scale;
+    const sx = (photo.width - sw) / 2;
+    const sy = (photo.height - sh) / 2;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(x, y, w, h);
+    ctx.clip();
+    ctx.drawImage(photo, sx, sy, sw, sh, x, y, w, h);
+    ctx.restore();
+
+    downloadBtn.disabled = false;
+    uploadBtn.disabled = false;
+    statusText.textContent = "প্রিভিউ তৈরি হয়েছে।";
+    URL.revokeObjectURL(photo.src);
+  };
+  photo.src = URL.createObjectURL(file);
 });
 
-uploadBtn.addEventListener("click", async function () {
-  if (!selectedFile) {
-    statusBox.textContent = "আগে একটি ছবি নির্বাচন করুন।";
-    return;
-  }
+downloadBtn.addEventListener("click", () => {
+  const link = document.createElement("a");
+  link.download = "faridabad-photocard.png";
+  link.href = canvas.toDataURL("image/png");
+  link.click();
+});
+
+uploadBtn.addEventListener("click", async () => {
+  if (!selectedPhoto) return;
+
   uploadBtn.disabled = true;
-  statusBox.textContent = "ছবি আপলোড হচ্ছে...";
+  statusText.textContent = "ছবি জমা হচ্ছে...";
+
   try {
-    const safeName = selectedFile.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const filePath = Date.now() + "-" + safeName;
+    const fileName = crypto.randomUUID() + "." +
+      (selectedPhoto.name.split(".").pop() || "jpg");
+
     const { data, error } = await supabaseClient.storage
       .from("photocard-uploads")
-      .upload(filePath, selectedFile, {
-        cacheControl: "3600",
-        upsert: false,
-        contentType: selectedFile.type
-      });
+      .upload(fileName, selectedPhoto);
+
     if (error) throw error;
 
     const { error: dbError } = await supabaseClient
       .from("photo_uploads")
-      .insert([{ image_url: data.path }]);
+      .insert({ image_url: data.path });
 
-    if (dbError) {
-      statusBox.textContent = "ছবি Storage-এ উঠেছে, কিন্তু তথ্য সংরক্ষণ হয়নি: " + dbError.message;
-      return;
-    }
-    statusBox.textContent = "ছবি সফলভাবে আপলোড হয়েছে!";
-    photoInput.value = "";
-    selectedFile = null;
+    if (dbError) throw dbError;
+
+    statusText.textContent = "ছবি সফলভাবে জমা হয়েছে!";
   } catch (error) {
-    statusBox.textContent = "ছবি আপলোড হয়নি: " + (error.message || "অজানা সমস্যা");
-  } finally {
-    uploadBtn.disabled = !selectedFile;
+    statusText.textContent = "সমস্যা হয়েছে: " + error.message;
+    uploadBtn.disabled = false;
   }
 });
 </script>
