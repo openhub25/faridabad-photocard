@@ -52,5 +52,49 @@ document.getElementById('photo').addEventListener('change',function(e){
  }
 });
 </script>
-</body>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = "https://uzwrtvzeeapkeqfabcbv.supabase.co";
+const SUPABASE_KEY = "sb_publishable_3UdMAkA88HTIfU7qv0p82Q_GTfL0lK2";
+
+const supabaseClient = supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
+document.getElementById("photo").addEventListener("change", async function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const preview = document.getElementById("preview");
+  preview.src = URL.createObjectURL(file);
+  preview.style.display = "block";
+
+  const fileName = Date.now() + "-" + file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+
+  const { data, error } = await supabaseClient.storage
+    .from("photocard_uploads")
+    .upload(fileName, file);
+
+  if (error) {
+    alert("ছবি আপলোড হয়নি: " + error.message);
+    return;
+  }
+
+  const { data: urlData } = supabaseClient.storage
+    .from("photocard_uploads")
+    .getPublicUrl(data.path);
+
+  const { error: dbError } = await supabaseClient
+    .from("photo_uploads")
+    .insert([{ image_url: urlData.publicUrl }]);
+
+  if (dbError) {
+    alert("ছবির তথ্য সংরক্ষণ হয়নি: " + dbError.message);
+    return;
+  }
+
+  alert("ছবি সফলভাবে আপলোড হয়েছে!");
+});
+</script></body>
 </html>
