@@ -73,7 +73,7 @@ document.getElementById("photo").addEventListener("change", async function(e) {
   const fileName = Date.now() + "-" + file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
 
   const { data, error } = await supabaseClient.storage
-    .from("photocard_uploads")
+    .from("photocard-uploads")
     .upload(fileName, file);
 
   if (error) {
@@ -82,7 +82,7 @@ document.getElementById("photo").addEventListener("change", async function(e) {
   }
 
   const { data: urlData } = supabaseClient.storage
-    .from("photocard_uploads")
+    .from("photocard-uploads")
     const { error: dbError } = await supabaseClient
   .from("photocard-uploads")
   .insert([{ image_url: data.path }]);
