@@ -83,11 +83,9 @@ document.getElementById("photo").addEventListener("change", async function(e) {
 
   const { data: urlData } = supabaseClient.storage
     .from("photocard_uploads")
-    .getPublicUrl(data.path);
-
-  const { error: dbError } = await supabaseClient
-    .from("photo_uploads")
-    .insert([{ image_url: urlData.publicUrl }]);
+    const { error: dbError } = await supabaseClient
+  .from("photo_uploads")
+  .insert([{ image_url: data.path }]);
 
   if (dbError) {
     alert("ছবির তথ্য সংরক্ষণ হয়নি: " + dbError.message);
