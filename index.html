@@ -1,12 +1,56 @@
 <!DOCTYPE html>
 <html lang="bn">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ফরিদাবাদ ৭০ সালা ফটোকার্ড</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ফরিদাবাদ ৭০ সালা ফটোকার্ড</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#f5f1ed;font-family:'Hind Siliguri',sans-serif;color:#29201f}
+header{background:#702d38;color:white;text-align:center;padding:30px 15px}
+header h1{font-size:25px;margin:0}
+header p{margin:8px 0 0}
+main{max-width:500px;margin:25px auto;padding:20px}
+.panel{background:white;border-radius:16px;padding:22px;box-shadow:0 4px 18px #00000012}
+h2{text-align:center;color:#702d38;margin-top:0}
+.upload{display:block;border:2px dashed #b88b90;border-radius:12px;padding:30px 15px;text-align:center;background:#fffafa;cursor:pointer}
+.upload input{display:none}
+#preview{display:none;width:150px;height:150px;object-fit:cover;border-radius:12px;margin:18px auto}
+button{width:100%;border:0;border-radius:10px;padding:13px;background:#702d38;color:white;font-size:17px;font-family:inherit;margin-top:15px}
+.note{text-align:center;color:#777;font-size:13px;margin-top:18px}
+footer{text-align:center;padding:20px;color:#777;font-size:13px}
+</style>
 </head>
 <body>
-  <h1>ফরিদাবাদ ৭০ সালা ফটোকার্ড</h1>
-  <p>স্বাগতম! নিজের ছবি আপলোড করে ফটোকার্ড তৈরি করুন।</p>
+<header>
+<h1>ফরিদাবাদ ৭০ সালা ফটোকার্ড</h1>
+<p>আপনার ছবি দিয়ে তৈরি করুন স্মরণীয় ফটোকার্ড</p>
+</header>
+<main>
+<div class="panel">
+<h2>আপনার ছবি আপলোড করুন</h2>
+<label class="upload">
+<input type="file" id="photo" accept="image/*">
+<span>📷</span><br>
+<strong>ছবি নির্বাচন করুন</strong>
+<br>এখানে চাপ দিয়ে মোবাইল থেকে ছবি দিন
+</label>
+<img id="preview" alt="আপনার ছবির প্রিভিউ">
+<button onclick="document.getElementById('photo').click()">ছবি নির্বাচন করুন</button>
+<p class="note">শুধুমাত্র নিজের ছবি আপলোড করুন।</p>
+</div>
+</main>
+<footer>ফরিদাবাদ ৭০ সালা ফটোকার্ড</footer>
+<script>
+document.getElementById('photo').addEventListener('change',function(e){
+ const file=e.target.files[0];
+ if(file){
+  const preview=document.getElementById('preview');
+  preview.src=URL.createObjectURL(file);
+  preview.style.display='block';
+ }
+});
+</script>
 </body>
 </html>
