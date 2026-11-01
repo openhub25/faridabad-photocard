@@ -4,140 +4,485 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#173f35">
 <title>ফরিদাবাদ ৭০ সালা ফটোকার্ড</title>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
-body{font-family:Arial,sans-serif;background:#f4f4f4;text-align:center;padding:20px}
-.container{max-width:600px;margin:auto;background:white;padding:20px;border-radius:12px}
-h2{color:#333}
-input,button{margin:12px;padding:12px;font-size:16px}
-button{background:#167b50;color:white;border:0;border-radius:6px;cursor:pointer}
-button:disabled{opacity:.5}
-canvas{width:100%;height:auto;margin-top:15px;border:1px solid #ddd}
-#status{margin:12px;color:#167b50}
+:root {
+  --green: #174b3b;
+  --gold: #c7a45b;
+  --text: #202820;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  padding: 28px 16px 40px;
+  font-family: "Noto Sans Bengali", "Hind Siliguri", Arial, sans-serif;
+  background: linear-gradient(145deg, #edf2ee, #f8f6f0);
+  color: var(--text);
+}
+
+.container {
+  width: min(100%, 560px);
+  margin: 0 auto;
+  background: white;
+  border: 1px solid #e7e9e5;
+  border-radius: 20px;
+  padding: 25px;
+  box-shadow: 0 12px 36px rgba(22,52,39,.09);
+}
+
+h1 {
+  font-size: 27px;
+  line-height: 1.4;
+  margin: 0 0 8px;
+  color: var(--green);
+  font-weight: 800;
+}
+
+.subtitle {
+  color: #66736c;
+  font-size: 15px;
+  line-height: 1.7;
+  margin-bottom: 22px;
+}
+
+.upload-panel {
+  padding: 18px;
+  border: 1px dashed #b8c8bd;
+  border-radius: 14px;
+  background: #f8faf8;
+  text-align: left;
+}
+
+.field-label {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+input[type=file] {
+  display: block;
+  width: 100%;
+  font-size: 14px;
+}
+
+input[type=file]::file-selector-button {
+  border: 0;
+  border-radius: 8px;
+  background: #e4eee7;
+  color: #10382c;
+  padding: 10px 13px;
+  margin-right: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.hint {
+  font-size: 13px;
+  color: #66736c;
+  margin-top: 12px;
+  line-height: 1.6;
+}
+
+.preview-title {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 22px 0 10px;
+}
+
+.preview-wrap {
+  padding: 10px;
+  background: #f4f5f2;
+  border: 1px solid #e5e8e3;
+  border-radius: 14px;
+}
+
+canvas {
+  display: none;
+  width: 100%;
+  height: auto;
+  border-radius: 7px;
+  background: white;
+}
+
+.empty-preview {
+  padding: 35px 12px;
+  text-align: center;
+  color: #7a857d;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+button {
+  min-height: 48px;
+  padding: 12px 10px;
+  border: 0;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: .42;
+  cursor: not-allowed;
+}
+
+#downloadBtn {
+  background: var(--green);
+  color: white;
+}
+
+#uploadBtn {
+  background: #f1e8d5;
+  color: #624a1c;
+  border: 1px solid #e2d1ad;
+}
+
+#status {
+  min-height: 24px;
+  margin: 14px 2px 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--green);
+  text-align: center;
+}
+
+.footer-note {
+  margin-top: 14px;
+  text-align: center;
+  color: #879189;
+  font-size: 12px;
+}
+
+@media(max-width:420px) {
+  body {
+    padding: 14px 10px 28px;
+  }
+
+  .actions {
+    grid-template-columns: 1fr;
+  }
+
+  .container {
+    padding: 18px;
+  }
+}
 </style>
 </head>
+
 <body>
-<div class="container">
-<h2>ফরিদাবাদ ৭০ সালা ফটোকার্ড</h2>
-<p>নিজের ছবি নির্বাচন করুন</p>
-<input type="file" id="photoInput" accept="image/*">
-<canvas id="canvas"></canvas>
-<br>
-<button id="downloadBtn" disabled>ফটোকার্ড ডাউনলোড করুন</button>
-<button id="uploadBtn" disabled>ছবি জমা দিন</button>
-<p id="status"></p>
-</div>
+
+<main class="container">
+
+  <h1>ফরিদাবাদ ৭০ সালা ফটোকার্ড</h1>
+
+  <p class="subtitle">
+    নিজের একটি ছবি নির্বাচন করুন। ছবিটি ফটোকার্ডের নির্দিষ্ট ফ্রেমে বসিয়ে প্রিভিউ দেখুন, তারপর ডাউনলোড করুন।
+  </p>
+
+  <section class="upload-panel">
+    <label class="field-label" for="photoInput">
+      আপনার ছবি নির্বাচন করুন
+    </label>
+
+    <input type="file" id="photoInput"
+      accept="image/jpeg,image/png,image/webp">
+
+    <p class="hint">
+      পরিষ্কার ও সামনের দিক থেকে তোলা ছবি ব্যবহার করুন।
+    </p>
+  </section>
+
+  <h2 class="preview-title">ফটোকার্ড প্রিভিউ</h2>
+
+  <div class="preview-wrap">
+    <div class="empty-preview" id="emptyPreview">
+      ছবি নির্বাচন করলে এখানে আপনার ফটোকার্ড দেখা যাবে।
+    </div>
+
+    <canvas id="canvas"></canvas>
+  </div>
+
+  <div class="actions">
+    <button id="downloadBtn" disabled>
+      ফটোকার্ড ডাউনলোড
+    </button>
+
+    <button id="uploadBtn" disabled>
+      মূল ছবি জমা দিন
+    </button>
+  </div>
+
+  <p id="status" role="status" aria-live="polite">
+    ডিজাইন লোড হচ্ছে...
+  </p>
+
+  <p class="footer-note">
+    প্রিভিউ দেখে নিশ্চিত হয়ে ফটোকার্ড ডাউনলোড করুন।
+  </p>
+
+</main>
 
 <script>
-const SUPABASE_URL = "https://uzwrtvzeeapkeqfabcbv.supabase.co";
-const SUPABASE_KEY = "sb_publishable_3UdMAkA88HTIfU7qv0p82Q_GTfL0lK2";
-const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const TEMPLATE_URL = "https://uzwrtvzeeapkeqfabcbv.supabase.co/storage/v1/object/public/photocard-templates/Faridabad%2070%20Sala%20Photocard.jpeg";
+const SUPABASE_URL =
+"https://uzwrtvzeeapkeqfabcbv.supabase.co";
+
+const SUPABASE_KEY =
+"sb_publishable_3UdMAkA88HTIfU7qv0p82Q_GTfL0L2";
+
+const supabaseClient =
+window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const TEMPLATE_URL =
+"https://uzwrtvzeeapkeqfabcbv.supabase.co/storage/v1/object/public/photocard-templates/Faridabad%2070%20Sala%20Photocard.jpeg";
 
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
+
 const photoInput = document.getElementById("photoInput");
 const downloadBtn = document.getElementById("downloadBtn");
 const uploadBtn = document.getElementById("uploadBtn");
 const statusText = document.getElementById("status");
+const emptyPreview = document.getElementById("emptyPreview");
 
 const template = new Image();
+
 template.crossOrigin = "anonymous";
+
 let selectedPhoto = null;
-let ready = false;
+let templateReady = false;
+let previewReady = false;
 
 template.onload = () => {
   canvas.width = template.naturalWidth;
   canvas.height = template.naturalHeight;
-  ctx.drawImage(template, 0, 0);
-  ready = true;
+
+  templateReady = true;
+
+  statusText.textContent =
+  "ডিজাইন প্রস্তুত। এবার আপনার ছবি নির্বাচন করুন।";
+
+  if (selectedPhoto) {
+    createPreview(selectedPhoto);
+  }
 };
+
 template.onerror = () => {
-  statusText.textContent = "ফটোকার্ডের ডিজাইন লোড হয়নি।";
+  statusText.textContent =
+  "ফটোকার্ডের ডিজাইন লোড হয়নি। আবার চেষ্টা করুন।";
 };
+
 template.src = TEMPLATE_URL;
 
-photoInput.addEventListener("change", () => {
-  const file = photoInput.files[0];
-  if (!file) return;
 
-  selectedPhoto = file;
+function createPreview(file) {
+
+  if (!templateReady) {
+    statusText.textContent =
+    "ডিজাইন লোড হচ্ছে, একটু অপেক্ষা করুন।";
+    return;
+  }
+
   const photo = new Image();
+  const objectUrl = URL.createObjectURL(file);
+
   photo.onload = () => {
-    if (!ready) {
-      statusText.textContent = "ডিজাইন লোড হচ্ছে, একটু অপেক্ষা করুন।";
-      return;
-    }
 
-    ctx.drawImage(template, 0, 0);
+    // মূল ডিজাইনের মাপ
+    const ARTBOARD_W = 1120;
+    const ARTBOARD_H = 1428;
 
-    // ছবির জায়গা: প্রয়োজনে প্রিভিউ দেখে এই মাপ ঠিক করা হবে
-const ARTBOARD_W = 1120;
-const ARTBOARD_H = 1428;
+    // সাদা ফ্রেমের সঠিক অবস্থান
+    const scaleX = canvas.width / ARTBOARD_W;
+    const scaleY = canvas.height / ARTBOARD_H;
 
-const x = 403.3333;
-const y = 747.7778;
-const w = 310.6667;
-const h = 310.6667;
+    const x = 403.3333 * scaleX;
+    const y = 747.7778 * scaleY;
+    const w = 310.6667 * scaleX;
+    const h = 310.6667 * scaleY;
 
-    const scale = Math.max(w / photo.width, h / photo.height);
+    // মূল ডিজাইন আঁকা
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    ctx.drawImage(
+      template,
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
+
+    // ছবিকে ফ্রেমের মাপে crop করা
+    const scale = Math.max(
+      w / photo.naturalWidth,
+      h / photo.naturalHeight
+    );
+
     const sw = w / scale;
     const sh = h / scale;
-    const sx = (photo.width - sw) / 2;
-    const sy = (photo.height - sh) / 2;
+
+    const sx = (photo.naturalWidth - sw) / 2;
+    const sy = (photo.naturalHeight - sh) / 2;
 
     ctx.save();
+
     ctx.beginPath();
     ctx.rect(x, y, w, h);
     ctx.clip();
-    ctx.drawImage(photo, sx, sy, sw, sh, x, y, w, h);
+
+    ctx.drawImage(
+      photo,
+      sx, sy, sw, sh,
+      x, y, w, h
+    );
+
     ctx.restore();
+
+    canvas.style.display = "block";
+    emptyPreview.style.display = "none";
+
+    previewReady = true;
 
     downloadBtn.disabled = false;
     uploadBtn.disabled = false;
-    statusText.textContent = "প্রিভিউ তৈরি হয়েছে।";
-    URL.revokeObjectURL(photo.src);
+
+    statusText.textContent =
+    "প্রিভিউ তৈরি হয়েছে। ফটোকার্ড দেখে ডাউনলোড করুন।";
+
+    URL.revokeObjectURL(objectUrl);
   };
-  photo.src = URL.createObjectURL(file);
+
+  photo.onerror = () => {
+    URL.revokeObjectURL(objectUrl);
+
+    statusText.textContent =
+    "ছবিটি খোলা যাচ্ছে না। অন্য ছবি নির্বাচন করুন।";
+  };
+
+  photo.src = objectUrl;
+}
+
+
+photoInput.addEventListener("change", () => {
+
+  const file = photoInput.files &&
+  photoInput.files[0];
+
+  if (!file) return;
+
+  if (!file.type.startsWith("image/")) {
+    statusText.textContent =
+    "অনুগ্রহ করে একটি ছবি নির্বাচন করুন।";
+    return;
+  }
+
+  selectedPhoto = file;
+
+  previewReady = false;
+
+  downloadBtn.disabled = true;
+  uploadBtn.disabled = true;
+
+  createPreview(file);
 });
+
 
 downloadBtn.addEventListener("click", () => {
-  const link = document.createElement("a");
-  link.download = "faridabad-photocard.png";
-  link.href = canvas.toDataURL("image/png");
-  link.click();
+
+  if (!previewReady) return;
+
+  canvas.toBlob((blob) => {
+
+    if (!blob) {
+      statusText.textContent =
+      "ডাউনলোড তৈরি করা যায়নি। আবার চেষ্টা করুন।";
+      return;
+    }
+
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+
+    link.download = "faridabad-photocard.png";
+    link.href = url;
+
+    link.click();
+
+    URL.revokeObjectURL(url);
+
+  }, "image/png");
+
 });
 
+
 uploadBtn.addEventListener("click", async () => {
-  if (!selectedPhoto) return;
+
+  if (!selectedPhoto || !previewReady) return;
 
   uploadBtn.disabled = true;
-  statusText.textContent = "ছবি জমা হচ্ছে...";
+
+  statusText.textContent =
+  "আপনার মূল ছবি জমা হচ্ছে...";
 
   try {
-    const fileName = crypto.randomUUID() + "." +
-      (selectedPhoto.name.split(".").pop() || "jpg");
 
-    const { data, error } = await supabaseClient.storage
+    const extension =
+    (selectedPhoto.name.split(".").pop() || "jpg").toLowerCase();
+
+    const fileName =
+    crypto.randomUUID() + "." + extension;
+
+    const { data, error } =
+    await supabaseClient.storage
       .from("photocard-uploads")
-      .upload(fileName, selectedPhoto);
+      .upload(fileName, selectedPhoto, {
+        contentType: selectedPhoto.type
+      });
 
     if (error) throw error;
 
-    const { error: dbError } = await supabaseClient
+    const { error: dbError } =
+    await supabaseClient
       .from("photo_uploads")
-      .insert({ image_url: data.path });
+      .insert({
+        image_url: data.path
+      });
 
     if (dbError) throw dbError;
 
-    statusText.textContent = "ছবি সফলভাবে জমা হয়েছে!";
+    statusText.textContent =
+    "আপনার ছবি সফলভাবে জমা হয়েছে। ধন্যবাদ!";
+
   } catch (error) {
-    statusText.textContent = "সমস্যা হয়েছে: " + error.message;
+
+    statusText.textContent =
+    "ছবি জমা হয়নি: " + error.message;
+
     uploadBtn.disabled = false;
   }
+
 });
+
 </script>
+
 </body>
 </html>
