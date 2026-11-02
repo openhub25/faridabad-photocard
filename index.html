@@ -247,13 +247,23 @@ const SUPABASE_URL =
 "https://uzwrtvzeeapkeqfabcbv.supabase.co";
 
 const SUPABASE_KEY =
-"sb_publishable_3UdMAkA88HTIfU7qv0p82Q_GTfL0L2";
+"sb_publishable_3UdMAkA88HTIfU7qv0p82Q_GTfL0lK2";
 
-const supabaseClient =
-window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabaseClient = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY,
+  {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false
+    }
+  }
+);
 
+// নতুন মূল ফটোকার্ড ডিজাইনের লিংক
 const TEMPLATE_URL =
-"https://uzwrtvzeeapkeqfabcbv.supabase.co/storage/v1/object/public/photocard-templates/Faridabad%2070%20Sala%20Photocard.jpeg";
+"https://uzwrtvzeeapkeqfabcbv.supabase.co/storage/v1/object/public/photocard-templates/Faridabad-70-sala-photocard.jpg.jpeg";
 
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
@@ -288,7 +298,7 @@ template.onload = () => {
 
 template.onerror = () => {
   statusText.textContent =
-  "ফটোকার্ডের ডিজাইন লোড হয়নি। আবার চেষ্টা করুন।";
+  "ফটোকার্ডের ডিজাইন লোড হয়নি। লিংক পরীক্ষা করুন।";
 };
 
 template.src = TEMPLATE_URL;
@@ -307,11 +317,9 @@ function createPreview(file) {
 
   photo.onload = () => {
 
-    // মূল ডিজাইনের মাপ
     const ARTBOARD_W = 1120;
     const ARTBOARD_H = 1428;
 
-    // সাদা ফ্রেমের সঠিক অবস্থান
     const scaleX = canvas.width / ARTBOARD_W;
     const scaleY = canvas.height / ARTBOARD_H;
 
@@ -320,7 +328,6 @@ function createPreview(file) {
     const w = 310.6667 * scaleX;
     const h = 310.6667 * scaleY;
 
-    // মূল ডিজাইন আঁকা
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     ctx.drawImage(
@@ -331,7 +338,6 @@ function createPreview(file) {
       canvas.height
     );
 
-    // ছবিকে ফ্রেমের মাপে crop করা
     const scale = Math.max(
       w / photo.naturalWidth,
       h / photo.naturalHeight
@@ -396,7 +402,6 @@ photoInput.addEventListener("change", () => {
   }
 
   selectedPhoto = file;
-
   previewReady = false;
 
   downloadBtn.disabled = true;
@@ -427,7 +432,7 @@ downloadBtn.addEventListener("click", () => {
 
     link.click();
 
-    URL.revokeObjectURL(url);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
 
   }, "image/png");
 
@@ -473,6 +478,8 @@ uploadBtn.addEventListener("click", async () => {
     "আপনার ছবি সফলভাবে জমা হয়েছে। ধন্যবাদ!";
 
   } catch (error) {
+
+    console.error("Upload error:", error);
 
     statusText.textContent =
     "ছবি জমা হয়নি: " + error.message;
